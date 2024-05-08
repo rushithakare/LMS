@@ -1,17 +1,17 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { object } from 'zod';
- 
+import mongoose, { Schema, Document } from "mongoose";
+import { object } from "zod";
+
 // Define the Employee interface
 interface Employee extends Document {
-  empId:string,
-  leaves: {[key:string]:{total:number, applied:[Date]}}
+  empId: string;
+  leaves: { [key: string]: { [key: string]: {allotted:string,[key:string]:string} } };
 }
- 
+
 /* TaskSchema will correspond to a collection in your MongoDB database. */
 const EmployeeSchema = new Schema<Employee>({
   empId: {
     /* The name of this pet */
- 
+
     type: String,
     required: [true, "Please provide the creator's ID"],
   },
@@ -20,6 +20,6 @@ const EmployeeSchema = new Schema<Employee>({
     required: [false, "Please provide the creator's Object"],
   },
 });
- 
+
 export default mongoose.models.Employee ||
   mongoose.model<Employee>("Employee", EmployeeSchema);

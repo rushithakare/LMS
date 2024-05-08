@@ -1,7 +1,7 @@
 import ApplyLeave from "./ApplyLeave";
 import LeaveList from "./LeaveList";
 
-const LeaveDetails: React.FC = ({}) => {
+const Leave: React.FC = ({}) => {
   return (
     <>
       <ApplyLeave></ApplyLeave>
@@ -10,4 +10,4 @@ const LeaveDetails: React.FC = ({}) => {
   );
 };
 
-export default LeaveDetails;
+export default Leave;
