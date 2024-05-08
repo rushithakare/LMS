@@ -51,7 +51,6 @@ const store =
 // }
 export async function UpdateEx(
   empId: string,
-  entity: "leaves" | "effort",
   path: string,
   data: any,
 ) {
@@ -63,6 +62,7 @@ export async function UpdateEx(
 
   const key = pathArray.pop() || "key";
   const node = pathArray.pop() || "node";
+  const entityderived = pathArray[0];
   let parent = root;
 
   pathArray.forEach((element) => {
@@ -70,10 +70,12 @@ export async function UpdateEx(
   });
 
   const x = parent[node];
+  console.log(x);
   let y = { ...x, [key]: data };
+  console.log(y);
 
   parent[node] = y;
 
-  root.markModified(entity);
+  root.markModified(entityderived);
   await root.save();
 }

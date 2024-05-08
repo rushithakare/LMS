@@ -3,6 +3,7 @@
 import dbConnect from "@/store/dbConnect";
 import Employee from "@/models/Employee";
 import { UpdateEx } from "@/store/tempStore";
+import { Update } from "@/store/employeeStore";
 
 export async function create(formData: {
   name: string;
@@ -39,9 +40,36 @@ export async function create(formData: {
 
 export const getEmployee = async () => {
   await dbConnect();
-  const x = await Employee.findOne({ empId: "INEMP123" });
-  //console.log(x);
+  const x = await Employee.findOne({ empId: "INEMP123" }, { leaves: 1 });
+  console.log(x);
   return x;
+};
+
+export const getAllLeaves = async (empId: string, year: string) => {
+  await dbConnect();
+  const x = await Employee.findOne({ empId: empId }, { leaves: 1 });
+  let allLeavesList: {
+    startDate: string;
+    endDate: string;
+    noOfDays: number;
+    duration: string;
+    reason: string;
+  }[] = [];
+  for (const data in x.leaves[year]) {
+    //console.log(data);
+    for (const entry in x.leaves[year][data]) {
+      const splittedArray = x.leaves[year][data][entry].split("|");
+      allLeavesList.push({
+        startDate: entry,
+        endDate: splittedArray[0],
+        noOfDays: splittedArray[1],
+        duration: splittedArray[2],
+        reason: splittedArray[3],
+      });
+    }
+  }
+  console.log(allLeavesList);
+  return allLeavesList;
 };
 
 export const applyLeave = async (
@@ -52,94 +80,28 @@ export const applyLeave = async (
     type: string;
     duration: "half" | "full";
     reason: string;
-  }[],
+  },
 ) => {
-  // await dbConnect();
-  // let employee = await Employee.findOne({ empId: employeeID });
 
-  // const leave = leaves[0];
+  const leave = leaves;
 
-  // const year = leave.start.getFullYear().toString();
+  const year = leave.start.getFullYear().toString();
 
-  // if (!employee) {
-  //   employee = new Employee({
-  //     empId: employeeID,
-  //     leaves: { [year]: {} },
-  //   });
-  // } else if (!employee.leaves) {
-  //   employee.leaves = { [year]: {} };
-  // } else if (!employee.leaves[year]) {
-  //   employee.leaves[year][leaves[0].type] = {};
-  // }
 
-  // console.log(employee);
+  const startDateKey = convertDatetoKey(leave.start);
+  const endDateKey = convertDatetoKey(leave.end);
+  const noOfDays = getDiffInDays(leaves.start, leaves.end);
 
-  // const startDateKey = convertDatetoKey(leave.start);
-  // const endDateKey = convertDatetoKey(leave.end);
-  // const noOfDays = getDiffInDays(leaves[0].start, leaves[0].end);
+  const leaveEntry = `${endDateKey}|${noOfDays}|${leave.duration}|${leave.reason}`;
 
-  // const leaveEntry = `${endDateKey}|${noOfDays}|${leave.duration}|${leave.reason}`;
 
-  // if (!employee.leaves[year][leaves[0].type].hasOwnProperty(startDateKey)) {
-  //   employee.leaves[year][leaves[0].type][startDateKey] = leaveEntry;
-  // } else {
-  //   console.log("Already exists", employee.leaves[year][leaves[0].type][startDateKey]);
-  //   return { success: false, leaveEntry };
-  // }
-
-  // employee.markModified("leaves");
-  // const savedEmployee = await employee.save();
-  // return { success: true, leaveEntry };
-
-  const result = UpdateEx(employeeID,"leaves","leaves.2024.Casual",{available:30});
-  return {success:true,leaves}
-
-  
+  const result = Update(
+    employeeID,
+    `leaves.${year}.${leave.type}.${startDateKey}`,
+    leaveEntry,
+  );
+  return { success: true, leaves };
 };
-
-// export const applyLeave = async (
-//   employeeID: string,
-//   leaves: {
-//     start: Date;
-//     end: Date;
-//     type: string;
-//     duration: "half" | "full";
-//     reason: string;
-//   }[],
-// ) => {
-//   await dbConnect();
-//   let employee = await Employee.findOne({ empId: employeeID });
-
-//   // If employee doesn't exist, create a new one
-//   if (!employee) {
-//     employee = new Employee({
-//       empId: employeeID,
-//     });
-//   }
-
-//   const leave = leaves[0];
-
-//   const startDateKey = convertDatetoKey(leave.start);
-//   const endDateKey = convertDatetoKey(leave.end);
-//   const noOfDays = getDiffInDays(leave.start, leave.end);
-
-//   const leaveEntry = `${endDateKey}|${leave.type}|${noOfDays}|${leave.duration}|${leave.reason}`;
-
-//   const year = leave.start.getFullYear().toString();
-
-//   // If year key doesn't exist, create it
-//   if (!employee[year]) {
-//     employee[year] = {};
-//   }
-
-//   // Add leave entry under year key
-//   employee[year][startDateKey] = leaveEntry;
-
-//   // Save the modified employee object
-//   employee.markModified([year]);
-//   const savedEmployee = await employee.save();
-//   return { success: true, leaveEntry };
-// };
 
 const convertDatetoKey = (date: Date) => {
   const key = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, "0")}${date.getDate().toString().padStart(2, "0")}`;
@@ -147,9 +109,6 @@ const convertDatetoKey = (date: Date) => {
 };
 
 function getDiffInDays(startDate: Date, endDate: Date): number {
-  // startDate = new Date(startDate.getFullYear(),startDate.getMonth(),startDate.getDate());
-  // endDate = new Date(endDate.getFullYear(),endDate.getMonth(),endDate.getDate());
-  // console.log(startDate,endDate);
   const oneDay = 24 * 60 * 60 * 1000;
   const diffInTime = Math.abs(endDate.getTime() - startDate.getTime());
   const diffInDays = Math.round(diffInTime / oneDay);

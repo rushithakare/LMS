@@ -1,4 +1,4 @@
-import { applyLeave, getEmployee } from "@/lib/employeeAction";
+import { applyLeave, getAllLeaves, getEmployee } from "@/lib/employeeAction";
 import { useEffect, useState } from "react";
 import UCDate from "../ui/date";
 import UCCheckbox from "../ui/checkbox";
@@ -15,10 +15,12 @@ const ApplyLeave: React.FC = ({}) => {
   const [endDate, setEndDate] = useState(new Date());
   const [reason, setReason] = useState("");
   const [duration, setDuration] = useState<"half" | "full">("full");
-  const [leavesData, setLeavesData] = useState<any>(null);
+  const [leavesData, setLeavesData] = useState<any[]>([]);
+
+  const currentYear = new Date().getFullYear();
 
   const getEmployeeData = async () => {
-    const x = await getEmployee();
+    const x = await getAllLeaves("INEMP123", currentYear.toString());
     setLeavesData(x);
   };
 
@@ -40,7 +42,6 @@ const ApplyLeave: React.FC = ({}) => {
   };
 
   const validateLeave = () => {
-    console.log("Validate data", leavesData);
     const startDateKey = convertDatetoKey(startDate);
     const endDateKey = convertDatetoKey(endDate);
 
@@ -48,28 +49,33 @@ const ApplyLeave: React.FC = ({}) => {
       toast.error("Start date should not be less than end date", {
         duration: 5000,
       });
-      return false;
-    } else if (leavesData.leaves.hasOwnProperty(startDateKey)) {
-      // alert("Leave already exists for start date:" + startDateKey);
-      toast.error("Leave already exists for : " + startDateKey, {
-        duration: 5000,
-      });
+      console.log("failed");
       return false;
     }
 
-    for (const key in leavesData.leaves) {
-      const [end, type] = leavesData.leaves[key].split("|");
-      const leaveStartDate = convertStringToDate(key);
-      const leaveEndDate = convertStringToDate(end);
-      console.log(key, end, startDate, endDate, leaveStartDate, leaveEndDate);
+    for (const key in leavesData) {
+      console.log(leavesData);
+      console.log(leavesData[key]);
+      const leaveStartDate = convertStringToDate(leavesData[key].startDate);
+      console.log(leaveStartDate);
+      console.log(startDate);
+      const leaveEndDate = convertStringToDate(leavesData[key].endDate);
+      console.log(leaveEndDate);
+      console.log(endDate);
 
       if (
+        leavesData[key].startDate === convertDatetoKey(startDate) ||
+        leavesData[key].endDate === convertDatetoKey(startDate)
+      ) {
+        toast.error("Leave already exists for : " + startDateKey, {
+          duration: 5000,
+        });
+        console.log("failed");
+        return false;
+      } else if (
         (startDate >= leaveStartDate && startDate <= leaveEndDate) ||
         (endDate >= leaveStartDate && endDate <= leaveEndDate)
       ) {
-        // alert(
-        //   "Leave overlaps with existing leave:" + leaveStartDate + leaveEndDate,
-        // );
         toast.error(
           "Leave overlaps with existing leave: " +
             type +
@@ -78,39 +84,40 @@ const ApplyLeave: React.FC = ({}) => {
             convertDatetoKey(leaveEndDate),
           { duration: 5000 },
         );
+        console.log("failed");
         return false;
       }
-    }
 
-    return true;
+      return true;
+    }
   };
 
   const validateandapplyLeave = () => {
     // alert("entered");
-    //if (!validateLeave()) return;
+    if (!validateLeave()) return;
 
-    const result = applyLeave("Hari", [
-      {
-        type: type,
-        start: startDate,
-        end: endDate,
-        duration: duration,
-        reason: reason,
-      },
-    ]);
+    // const result = applyLeave("INEMP123", [
+    //   {
+    //     type: type,
+    //     start: startDate,
+    //     end: endDate,
+    //     duration: duration,
+    //     reason: reason,
+    //   },
+    // ]);
 
-    result.then((data) => {
-      if (data.success) {
-        setDuration("full");
-        setReason("");
-        setType("Casual");
-        setStartDate(new Date());
-        setEndDate(new Date());
-        toast.success("Leave Applied", { duration: 5000 });
-      } else {
-        toast.error("Something went wrong", { duration: 5000 });
-      }
-    });
+    // result.then((data) => {
+    //   if (data.success) {
+    //     setDuration("full");
+    //     setReason("");
+    //     setType("Casual");
+    //     setStartDate(new Date());
+    //     setEndDate(new Date());
+    //     toast.success("Leave Applied", { duration: 5000 });
+    //   } else {
+    //     toast.error("Something went wrong", { duration: 5000 });
+    //   }
+    // });
   };
 
   return (

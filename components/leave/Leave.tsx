@@ -5,7 +5,7 @@ const Leave: React.FC = ({}) => {
   return (
     <>
       <ApplyLeave></ApplyLeave>
-      <LeaveList></LeaveList>
+      {/* <LeaveList></LeaveList> */}
     </>
   );
 };
